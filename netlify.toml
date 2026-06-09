@@ -1,0 +1,16 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Proxy DataGolf API (optional — only if VITE_DATAGOLF_API_KEY is set in Netlify env)
+[[redirects]]
+  from = "/api/datagolf/*"
+  to = "https://feeds.datagolf.com/:splat"
+  status = 200
+  force = true
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
