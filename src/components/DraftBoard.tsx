@@ -1,11 +1,15 @@
-import type { DraftPick } from '../types';
+import type { DisplayMode, DraftPick, GameMode } from '../types';
 import { DRAFT_CATEGORIES } from '../types';
+import { formatStat, totalStatLabel, type RatingScales } from '../lib/ratings';
 
 interface DraftBoardProps {
   picks: DraftPick[];
+  mode: GameMode;
+  displayMode: DisplayMode;
+  ratingScales: RatingScales;
 }
 
-export function DraftBoard({ picks }: DraftBoardProps) {
+export function DraftBoard({ picks, mode, displayMode, ratingScales }: DraftBoardProps) {
   const picksByCategory = Object.fromEntries(picks.map((p) => [p.category, p]));
 
   return (
@@ -26,17 +30,19 @@ export function DraftBoard({ picks }: DraftBoardProps) {
           );
         })}
       </div>
-      {picks.length > 0 && (
+      {picks.length > 0 && mode === 'classic' && (
         <p className="draft-board-note">
-          Total SG = sum of all four skills
+          {totalStatLabel(displayMode)} = sum of all four skills
           {picks.length === DRAFT_CATEGORIES.length && (
             <>
               {' '}
               →{' '}
               <strong>
-                {picks
-                  .reduce((sum, p) => sum + p.golfer[p.category], 0)
-                  .toFixed(2)}
+                {formatStat(
+                  picks.reduce((sum, p) => sum + p.golfer[p.category], 0),
+                  displayMode,
+                  ratingScales.compositeTotal,
+                )}
               </strong>
             </>
           )}

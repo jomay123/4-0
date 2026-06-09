@@ -14,6 +14,9 @@ export interface Golfer {
 
 export type GameMode = 'classic' | 'expert';
 
+/** How skill values are shown in the UI — simulation always uses raw SG. */
+export type DisplayMode = 'sg' | 'rating';
+
 export interface DraftPick {
   round: number;
   category: DraftCategory;

@@ -1,8 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// For GitHub Pages project sites (username.github.io/repo-name/), set:
-// base: '/repo-name/'
 export default defineConfig({
   base: '/',
   plugins: [react()],

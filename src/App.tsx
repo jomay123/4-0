@@ -6,7 +6,9 @@ import { Results } from './components/Results';
 import { loadTopGolfers } from './lib/datagolf';
 import { pickRandomCategory, pickRandomGolfers } from './lib/draft';
 import { simulateSeason } from './lib/simulation';
+import { buildRatingScales } from './lib/ratings';
 import type {
+  DisplayMode,
   DraftCategory,
   DraftPick,
   GameMode,
@@ -22,6 +24,7 @@ const API_KEY = import.meta.env.VITE_DATAGOLF_API_KEY as string | undefined;
 export default function App() {
   const [phase, setPhase] = useState<GamePhase>('welcome');
   const [mode, setMode] = useState<GameMode>('classic');
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('sg');
   const [golfers, setGolfers] = useState<Golfer[]>([]);
   const [dataSource, setDataSource] = useState<'datagolf' | 'fallback'>('fallback');
   const [loading, setLoading] = useState(true);
@@ -41,6 +44,7 @@ export default function App() {
     () => golfers.filter((g) => !draftedIds.has(g.dg_id)),
     [golfers, draftedIds],
   );
+  const ratingScales = useMemo(() => buildRatingScales(golfers), [golfers]);
 
   useEffect(() => {
     loadTopGolfers(50, API_KEY).then(({ golfers: data, source }) => {
@@ -164,14 +168,38 @@ export default function App() {
               The goal: win all four majors.
             </p>
 
+            <div className="display-toggle">
+              <span className="display-toggle-label">Stat display</span>
+              <div className="display-toggle-options">
+                <button
+                  type="button"
+                  className={`display-option ${displayMode === 'sg' ? 'active' : ''}`}
+                  onClick={() => setDisplayMode('sg')}
+                >
+                  Strokes Gained
+                </button>
+                <button
+                  type="button"
+                  className={`display-option ${displayMode === 'rating' ? 'active' : ''}`}
+                  onClick={() => setDisplayMode('rating')}
+                >
+                  Ratings
+                </button>
+              </div>
+            </div>
+
             <div className="mode-cards">
               <button type="button" className="mode-card" onClick={() => startGame('classic')}>
                 <h3>Classic</h3>
-                <p>Full SG stats visible — make informed picks.</p>
+                <p>
+                  {displayMode === 'sg'
+                    ? 'Full SG stats visible — make informed picks.'
+                    : 'Full ratings visible — make informed picks.'}
+                </p>
               </button>
               <button type="button" className="mode-card expert" onClick={() => startGame('expert')}>
                 <h3>Expert</h3>
-                <p>Ratings hidden. Draft on golf knowledge alone.</p>
+                <p>Stats hidden. Draft on golf knowledge alone.</p>
               </button>
             </div>
 
@@ -180,7 +208,10 @@ export default function App() {
               <ol>
                 <li>Pull the slot machine to land on a skill category (OTT, APP, ARG, or PUTT).</li>
                 <li>Choose 1 of 5 random golfers — their skill joins your composite.</li>
-                <li>Complete 4 rounds. Total SG is the sum of all four skills.</li>
+                <li>
+                  Complete 4 rounds. Your {displayMode === 'sg' ? 'total SG' : 'overall rating'} is the
+                  sum of all four skills.
+                </li>
                 <li>You get one reroll per game to redraw your 5 options.</li>
                 <li>Simulate a full season — 16 events including all four majors.</li>
                 <li>Goal: win the Masters, PGA, U.S. Open, and The Open (4/4).</li>
@@ -197,7 +228,7 @@ export default function App() {
                 <span className="round-num">{draftRound}</span>
                 <span className="round-of">/ {DRAFT_ROUNDS}</span>
               </div>
-              <DraftBoard picks={picks} />
+              <DraftBoard picks={picks} mode={mode} displayMode={displayMode} ratingScales={ratingScales} />
             </div>
 
             <div className="draft-center">
@@ -221,6 +252,8 @@ export default function App() {
                 golfers={draftOptions}
                 category={currentCategory}
                 mode={mode}
+                displayMode={displayMode}
+                ratingScales={ratingScales}
                 onSelect={handlePick}
                 onReroll={handleReroll}
                 rerollsLeft={rerollsLeft}
@@ -240,7 +273,13 @@ export default function App() {
         )}
 
         {phase === 'results' && season && (
-          <Results season={season} mode={mode} onPlayAgain={resetGame} />
+          <Results
+            season={season}
+            mode={mode}
+            displayMode={displayMode}
+            ratingScales={ratingScales}
+            onPlayAgain={resetGame}
+          />
         )}
       </main>
 

@@ -1,10 +1,13 @@
-import type { GameMode, SeasonResult } from '../types';
+import type { DisplayMode, DraftCategory, GameMode, SeasonResult } from '../types';
 import { TIER_LABELS } from '../lib/simulation';
-import { formatSg, getCategoryMeta } from '../lib/draft';
+import { getCategoryMeta } from '../lib/draft';
+import { formatStat, totalStatLabel, type RatingScales } from '../lib/ratings';
 
 interface ResultsProps {
   season: SeasonResult;
   mode: GameMode;
+  displayMode: DisplayMode;
+  ratingScales: RatingScales;
   onPlayAgain: () => void;
 }
 
@@ -16,7 +19,15 @@ function formatFinish(pos: number | 'MC' | 'WD' | null): string {
   return `T${pos}`;
 }
 
-export function Results({ season, mode, onPlayAgain }: ResultsProps) {
+const COMPOSITE_STATS: { key: DraftCategory | 'sg_total'; label: string }[] = [
+  { key: 'sg_total', label: 'total' },
+  { key: 'sg_ott', label: 'OTT' },
+  { key: 'sg_app', label: 'APP' },
+  { key: 'sg_arg', label: 'ARG' },
+  { key: 'sg_putt', label: 'PUTT' },
+];
+
+export function Results({ season, mode, displayMode, ratingScales, onPlayAgain }: ResultsProps) {
   const tierMeta = TIER_LABELS[season.tier];
   const tierTitle =
     season.tier === 'grand-slam'
@@ -70,37 +81,39 @@ export function Results({ season, mode, onPlayAgain }: ResultsProps) {
       <div className="composite-card">
         <h3>Your Composite Golfer</h3>
         <p className="composite-desc">
-          Four specialists merged into one player. Total SG is the sum of OTT, APP, ARG, and PUTT.
+          Four specialists merged into one player. {totalStatLabel(displayMode)} is the sum of OTT,
+          APP, ARG, and PUTT.
         </p>
-        <div className="composite-stats">
-          <div className="composite-stat main">
-            <span className="composite-stat-label">Total SG</span>
-            <span className="composite-stat-value">{formatSg(composite.sg_total)}</span>
+        {mode === 'classic' && (
+          <div className="composite-stats">
+            {COMPOSITE_STATS.map(({ key, label }) => {
+              const value = composite[key];
+              const range =
+                key === 'sg_total'
+                  ? ratingScales.compositeTotal
+                  : ratingScales.byCategory[key];
+              return (
+                <div key={key} className={`composite-stat ${key === 'sg_total' ? 'main' : ''}`}>
+                  <span className="composite-stat-label">
+                    {key === 'sg_total' ? totalStatLabel(displayMode) : label}
+                  </span>
+                  <span className="composite-stat-value">
+                    {formatStat(value, displayMode, range)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-          <div className="composite-stat">
-            <span className="composite-stat-label">OTT</span>
-            <span className="composite-stat-value">{formatSg(composite.sg_ott)}</span>
-          </div>
-          <div className="composite-stat">
-            <span className="composite-stat-label">APP</span>
-            <span className="composite-stat-value">{formatSg(composite.sg_app)}</span>
-          </div>
-          <div className="composite-stat">
-            <span className="composite-stat-label">ARG</span>
-            <span className="composite-stat-value">{formatSg(composite.sg_arg)}</span>
-          </div>
-          <div className="composite-stat">
-            <span className="composite-stat-label">PUTT</span>
-            <span className="composite-stat-value">{formatSg(composite.sg_putt)}</span>
-          </div>
-        </div>
+        )}
         <div className="composite-parts">
           {composite.parts.map((part) => (
             <div key={part.category} className="composite-part">
               <span className="part-cat">{getCategoryMeta(part.category).short}</span>
               <span className="part-name">{part.golferName}</span>
               {mode === 'classic' && (
-                <span className="part-val">{formatSg(part.value)}</span>
+                <span className="part-val">
+                  {formatStat(part.value, displayMode, ratingScales.byCategory[part.category])}
+                </span>
               )}
               {mode === 'expert' && <span className="part-val">???</span>}
             </div>

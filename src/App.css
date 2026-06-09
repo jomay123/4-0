@@ -132,6 +132,52 @@ body {
   line-height: 1.6;
 }
 
+.display-toggle {
+  max-width: 420px;
+  margin: 0 auto 2rem;
+}
+
+.display-toggle-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.display-toggle-options {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.display-option {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.display-option:hover {
+  border-color: var(--green-primary);
+  color: var(--text);
+}
+
+.display-option.active {
+  border-color: var(--green-primary);
+  background: rgba(34, 139, 87, 0.12);
+  color: var(--text);
+  font-weight: 600;
+}
+
 .mode-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

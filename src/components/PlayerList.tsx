@@ -1,10 +1,13 @@
-import type { DraftCategory, GameMode, Golfer } from '../types';
-import { countryFlag, formatSg, getCategoryMeta, getSkillValue } from '../lib/draft';
+import type { DisplayMode, DraftCategory, GameMode, Golfer } from '../types';
+import { countryFlag, getCategoryMeta, getSkillValue } from '../lib/draft';
+import { formatStat, sgToRating, totalStatLabel, type RatingScales } from '../lib/ratings';
 
 interface PlayerListProps {
   golfers: Golfer[];
   category: DraftCategory;
   mode: GameMode;
+  displayMode: DisplayMode;
+  ratingScales: RatingScales;
   onSelect: (golfer: Golfer) => void;
   onReroll?: () => void;
   rerollsLeft?: number;
@@ -15,6 +18,8 @@ export function PlayerList({
   golfers,
   category,
   mode,
+  displayMode,
+  ratingScales,
   onSelect,
   onReroll,
   rerollsLeft = 0,
@@ -43,6 +48,13 @@ export function PlayerList({
       <div className="player-options">
         {golfers.map((golfer) => {
           const skill = getSkillValue(golfer, category);
+          const categoryRange = ratingScales.byCategory[category];
+          const skillDisplay =
+            displayMode === 'sg' ? skill : sgToRating(skill, categoryRange);
+          const isHot =
+            displayMode === 'sg' ? skill >= 0.5 : skillDisplay >= 85;
+          const isCold =
+            displayMode === 'sg' ? skill < 0 : skillDisplay <= 58;
 
           return (
             <button
@@ -59,10 +71,13 @@ export function PlayerList({
               <div className="player-name">{golfer.player_name}</div>
               {mode === 'classic' && (
                 <div className="player-stats">
-                  <span className={`sg-highlight ${skill >= 0.5 ? 'hot' : skill < 0 ? 'cold' : ''}`}>
-                    {meta.short}: {formatSg(skill)}
+                  <span className={`sg-highlight ${isHot ? 'hot' : isCold ? 'cold' : ''}`}>
+                    {meta.short}: {formatStat(skill, displayMode, categoryRange)}
                   </span>
-                  <span className="sg-total">Total: {formatSg(golfer.sg_total)}</span>
+                  <span className="sg-total">
+                    {totalStatLabel(displayMode)}:{' '}
+                    {formatStat(golfer.sg_total, displayMode, ratingScales.total)}
+                  </span>
                 </div>
               )}
               {mode === 'expert' && (
